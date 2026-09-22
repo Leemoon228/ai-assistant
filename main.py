@@ -13,6 +13,8 @@ from routers import router
 #     await close_client()
 
 # Запуск: uvicorn main:app --reload
+
+# TODO: Добавить возможность задать порт
 app = FastAPI(title="AI Assistant ML Service", version="0.1.0") #, lifespan=lifespan)
 app.include_router(router)
 
