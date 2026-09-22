@@ -1,0 +1,5 @@
+fastapi
+httpx
+language_tool_python
+langdetect
+uvicorn
