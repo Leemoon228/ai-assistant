@@ -1,6 +1,6 @@
-# pip install language-tool-python langdetect
-from langdetect import detect, LangDetectException
-import language_tool_python
+# pip install fasttext-langdetect text-corrector
+from ftlangdetect import detect
+from text_corrector import correct_text
 
 from exceptions import UnsupportedLanguageError
 
@@ -8,23 +8,15 @@ from exceptions import UnsupportedLanguageError
 class PreprocessingService:
     MAX_LENGTH = 200
 
-    # def process0(self, text: str) -> tuple[str, bool]:
-    #     # обрезка до 200 символов
-    #     truncated = len(text) > self.MAX_LENGTH
-    #     if truncated:
-    #         text = text[: self.MAX_LENGTH]
-    #
-    #     return text, truncated
-
     def __init__(self):
-        # LanguageTool по умолчанию использует публичный API
-        # (лимиты: 20 запросов/мин, 75 000 символов/мин).
-        # Для продакшена лучше поднять локальный сервер:
-        #   language_tool_python.LanguageTool('en-US', config={'cacheSize': 1000})
-        self._tool = language_tool_python.LanguageTool("en-US")
+        # LanguageTool удалён из флоу.
+        # Осталась только пословная коррекция опечаток через text_corrector.
+        pass
 
     def close(self) -> None:
-        self._tool.close()
+        # Закрывать нечего — ресурсов больше нет.
+        # Метод оставлен для совместимости с lifespan.
+        pass
 
     def process(self, text: str) -> tuple[str, bool]:
         # 1. Проверка языка — до обрезки, чтобы не резать вслепую
@@ -36,21 +28,22 @@ class PreprocessingService:
         if truncated:
             text = text[: self.MAX_LENGTH]
 
-        # 3. Исправление опечаток и грамматики
-        text = self._tool.correct(text)
+        # 3. Исправление опечаток (пословно, на основе словаря)
+        text, _ = correct_text(text, max_dist=2)
 
         return text, truncated
 
     @staticmethod
     def _safe_detect(text: str) -> str | None:
         try:
-            return detect(text)
-        except LangDetectException:
+            result = detect(text=text, low_memory=False)
+            return result["lang"]
+        except Exception:
             return None
 
     def _is_english(self, text: str) -> bool:
         # Пустая строка / пробелы — считаем валидной (нечего проверять)
-        # !!! Вохможны ложные срабатывания на коротких тестах (пара слов)
+        # Возможны ложные срабатывания на коротких текстах (пара слов)
         if not text or not text.strip():
             return True
 
