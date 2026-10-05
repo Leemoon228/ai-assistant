@@ -1,4 +1,8 @@
 class GenerateAnswerService:
+    def close(self) -> None:
+        # TODO: реализовать закрытие необходимых ресурсов
+        pass
+
     def generate(self, text: str, category: str | None = None) -> dict:
         # TODO: вызов основной ML-модели (выдача инструкции или уточнения)
 
