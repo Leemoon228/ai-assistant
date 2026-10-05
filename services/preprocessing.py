@@ -23,6 +23,9 @@ class PreprocessingService:
         #   language_tool_python.LanguageTool('en-US', config={'cacheSize': 1000})
         self._tool = language_tool_python.LanguageTool("en-US")
 
+    def close(self) -> None:
+        self._tool.close()
+
     def process(self, text: str) -> tuple[str, bool]:
         # 1. Проверка языка — до обрезки, чтобы не резать вслепую
         if not self._is_english(text):
