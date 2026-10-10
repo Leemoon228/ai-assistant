@@ -1,3 +1,4 @@
+
 import asyncio
 import logging
 import os
@@ -27,7 +28,6 @@ async def _warmup_ollama(service: GenerateAnswerService) -> None:
     except RuntimeError as error:
         logger.warning("Ollama model warmup failed: %s", error)
 
-
 # Если бдем использовать написанный http-клиент, его нужно закрывать при остановке fastApi
 # @asynccontextmanager
 # async def lifespan(app: FastAPI):
@@ -44,6 +44,14 @@ async def lifespan(app: FastAPI):
         app.state.classification_service
     )
     try:
+        # Прогреваем preprocessing до обработки первого запроса.
+        app.state.preprocessing_warmup_task = asyncio.create_task(
+            asyncio.to_thread(
+                app.state.preprocessing_service.warmup
+            )
+        )
+        logger.info("Preprocessing warmup completed")
+
         # Прогреваем Ollama в отдельном потоке, не задерживая запуск API.
         app.state.ollama_warmup_task = asyncio.create_task(
             _warmup_ollama(app.state.generate_answer_service)
@@ -55,8 +63,9 @@ async def lifespan(app: FastAPI):
         app.state.generate_answer_service.close()
 
 
-# TODO: Добавить возможность задать порт
 app = FastAPI(lifespan=lifespan, title="AI Assistant ML Service", version="0.1.0") #, lifespan=lifespan)
+app.include_router(router)
+
 app.include_router(router)
 
 @app.exception_handler(AppError)
