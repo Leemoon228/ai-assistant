@@ -4,7 +4,7 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    OLLAMA_BASE_URL=http://host.docker.internal:11434
+    OLLAMA_BASE_URL=http://130.49.188.18:11434
 
 WORKDIR /app
 
