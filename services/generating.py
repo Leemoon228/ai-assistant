@@ -6,7 +6,8 @@ from services.classification import ClassificationService
 from services import search_assistant
 
 
-OLLAMA_URL = "http://127.0.0.1:11434"
+#OLLAMA_URL = "http://127.0.0.1:11434"
+OLLAMA_URL = "http://130.49.188.18:11434" # remote Ollama endpoint when Leemoon serves it
 OLLAMA_MODEL = "gemma4:e4b"
 
 
