@@ -27,7 +27,7 @@ class PreprocessingService:
             t0 = perf_counter()
             detect(
                 text="This is a warmup sentence for language detection.",
-                low_memory=False,
+                low_memory=True,
             )
             logger.info(
                 "Language detection warmup: %.3fs",
@@ -80,7 +80,7 @@ class PreprocessingService:
     @staticmethod
     def _safe_detect(text: str) -> str | None:
         try:
-            result = detect(text=text, low_memory=False)
+            result = detect(text=text, low_memory=True)
             return result["lang"]
         except Exception:
             logger.exception("Language detection failed")
