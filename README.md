@@ -101,6 +101,11 @@ status
 ------
 UP
 ```
+Проверить предобработку (исправление опечаток:
+
+```
+curl --% -X POST "http://127.0.0.1:8085/assistant/process" -H "Content-Type: application/json" -d "{\"text\":\"When are the next sales?\"}"
+```
 
 Проверить генерацию ответа напрямую:
 
@@ -117,6 +122,89 @@ curl --% -X POST "http://127.0.0.1:8000/assistant/generate-answer" -H "Content-T
   необязательный `order_context`.
 
 Swagger UI доступен по адресу `http://127.0.0.1:8000/docs`.
+
+## Запуск AI-Assistant через Docker Compose
+
+Сервис можно запустить двумя способами:
+- с Ollama, установленной локально;
+- с Ollama в отдельном Docker-контейнере.
+
+Сервис будет доступен по порту 8085.
+
+## Вариант 1. Ollama установлена локально
+
+В этом варианте Ollama запускается локально, а AI-ассистент работает в Docker-контейнере. Контейнер использует уже установленную модель, поэтому Ollama не нужно запускать через Docker Compose.
+
+### 1. Установка Ollama и загрузка модели (см. инструкцию ранее)
+### 2. Настройка Docker Compose
+
+В `docker-compose.yml` используйте конфигурацию с OLLAMA_BASE_URL: http://host.docker.internal:11434
+
+### 4. Запуск AI-ассистента
+
+Из каталога проекта выполните:
+
+```powershell
+docker compose up -d --build
+```
+
+Проверьте логи:
+
+```powershell
+docker compose logs -f ai-assistant
+```
+
+После запуска API будет доступен по адресу:
+
+- Swagger UI: http://localhost:8085/docs
+
+### 5. Если Ollama недоступна из контейнера
+
+Убедитесь, что:
+
+- Ollama запущена и отвечает на `http://localhost:11434/api/tags` в Windows.
+- В контейнер передаётся `OLLAMA_BASE_URL=http://host.docker.internal:11434`.
+- Код приложения действительно использует переменную `OLLAMA_BASE_URL`, а не обращается к `127.0.0.1:11434` напрямую.
+
+### Вариант 2. Ollama в отдельном Docker-контейнере
+
+В этом режиме приложение и Ollama запускаются совместно через Docker Compose. Модель загружается автоматически при первом запуске и сохраняется в Docker volume.
+
+### 1. Замените конфигурацию из первого варианта закоменченным блоком в `docker-compose.yml`.
+### 2. Запустите сервисы:
+
+```bash
+docker compose up -d --build
+```
+
+### 3. ### Проверьте состояние контейнеров и логи:
+
+```bash
+docker compose ps
+docker compose logs -f ai-assistant
+docker compose logs -f ollama
+```
+
+При первом запуске Ollama скачает модель `gemma4:e4b`. Время загрузки зависит от скорости интернета и размера модели.
+
+### 4. Проверка работы
+
+После запуска API будет доступен по адресу:
+
+- Swagger UI: http://localhost:8085/docs
+- OpenAPI: http://localhost:8085/openapi.json
+
+Для остановки сервисов:
+
+```bash
+docker compose down
+```
+
+При остановке Docker volume с моделью сохраняется. Чтобы удалить его вместе с загруженными моделями, выполните:
+
+```bash
+docker compose down -v
+```
 
 ## Запуск всего приложения
 

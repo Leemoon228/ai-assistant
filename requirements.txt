@@ -1,8 +1,5 @@
---extra-index-url https://download.pytorch.org/whl/cpu
-
-fastapi
-fasttext-langdetect
-httpx
-text-corrector
+fastapi>=0.119.0
+fasttext-langdetect>=1.0.5
+text-corrector>=0.1.0
 torch==2.14.1+cpu
-uvicorn
+uvicorn>=0.38.0
