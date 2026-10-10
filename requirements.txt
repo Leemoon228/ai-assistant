@@ -1,6 +1,5 @@
-fastapi
-fasttext-langdetect
-httpx
-text-corrector
+fastapi>=0.119.0
+fasttext-langdetect>=1.0.5
+text-corrector>=0.1.0
 torch>=2.0
-uvicorn
+uvicorn>=0.38.0
