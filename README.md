@@ -104,7 +104,7 @@ UP
 Проверить предобработку (исправление опечаток:
 
 ```
-curl --% -X POST "http://127.0.0.1:8085/assistant/process" -H "Content-Type: application/json" -d "{\"text\":\"When are the next sales?\"}"
+curl --% -X POST "http://127.0.0.1:8000/assistant/process" -H "Content-Type: application/json" -d "{\"text\":\"When are the next sales?\"}"
 ```
 
 Проверить генерацию ответа напрямую:
@@ -129,7 +129,7 @@ Swagger UI доступен по адресу `http://127.0.0.1:8000/docs`.
 - с Ollama, установленной локально;
 - с Ollama в отдельном Docker-контейнере.
 
-Сервис будет доступен по порту 8085.
+Сервис будет доступен по порту 8000.
 
 ## Вариант 1. Ollama установлена локально
 
@@ -154,18 +154,6 @@ docker compose up -d --build
 docker compose logs -f ai-assistant
 ```
 
-После запуска API будет доступен по адресу:
-
-- Swagger UI: http://localhost:8085/docs
-
-### 5. Если Ollama недоступна из контейнера
-
-Убедитесь, что:
-
-- Ollama запущена и отвечает на `http://localhost:11434/api/tags` в Windows.
-- В контейнер передаётся `OLLAMA_BASE_URL=http://host.docker.internal:11434`.
-- Код приложения действительно использует переменную `OLLAMA_BASE_URL`, а не обращается к `127.0.0.1:11434` напрямую.
-
 ### Вариант 2. Ollama в отдельном Docker-контейнере
 
 В этом режиме приложение и Ollama запускаются совместно через Docker Compose. Модель загружается автоматически при первом запуске и сохраняется в Docker volume.
@@ -177,7 +165,7 @@ docker compose logs -f ai-assistant
 docker compose up -d --build
 ```
 
-### 3. ### Проверьте состояние контейнеров и логи:
+### 3. Проверьте состояние контейнеров и логи:
 
 ```bash
 docker compose ps
@@ -186,13 +174,6 @@ docker compose logs -f ollama
 ```
 
 При первом запуске Ollama скачает модель `gemma4:e4b`. Время загрузки зависит от скорости интернета и размера модели.
-
-### 4. Проверка работы
-
-После запуска API будет доступен по адресу:
-
-- Swagger UI: http://localhost:8085/docs
-- OpenAPI: http://localhost:8085/openapi.json
 
 Для остановки сервисов:
 
