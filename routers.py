@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from time import perf_counter
 
 from schemas import (
     ProcessRequest, ProcessResponse,
@@ -24,10 +25,12 @@ def process(
     body: ProcessRequest,
     service: PreprocessingService = Depends(get_preprocessing_service),
 ):
+    started = perf_counter()
     processed, truncated = service.process(body.text)
     return ProcessResponse(
         processed=processed,
         truncated=truncated,
+        duration_ms=round((perf_counter() - started) * 1000, 3),
     )
 
 
@@ -44,4 +47,12 @@ def answer(
     body: GenerateAnswerRequest,
     service: GenerateAnswerService = Depends(get_generate_answer_service),
 ):
-    return GenerateAnswerResponse(**service.generate(body.text, body.category))
+    started = perf_counter()
+    result = service.generate(
+        body.text,
+        order_context=body.order_context,
+    )
+    result["duration_ms"] = round((perf_counter() - started) * 1000, 3)
+    return GenerateAnswerResponse(
+        **result
+    )

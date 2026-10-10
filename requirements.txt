@@ -1,5 +1,6 @@
 fastapi
+fasttext-langdetect
 httpx
-language_tool_python
-langdetect
+text-corrector
+torch>=2.0
 uvicorn
