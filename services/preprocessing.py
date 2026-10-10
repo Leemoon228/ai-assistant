@@ -1,7 +1,7 @@
-
 # pip install fasttext-langdetect text-corrector
 
 import logging
+import re
 from time import perf_counter
 
 from ftlangdetect import detect
@@ -15,6 +15,9 @@ logger = logging.getLogger(__name__)
 
 class PreprocessingService:
     MAX_LENGTH = 200
+
+    # Регулярное выражение для поиска знаков препинания.
+    _PUNCT_PATTERN = re.compile(r"[.,!?;:'\"()\[\]{}\-—–…]")
 
     def __init__(self):
         pass
@@ -35,8 +38,8 @@ class PreprocessingService:
             )
 
             t1 = perf_counter()
-            correct_text(
-                "This is a warmup sentence.",
+            self._correct_preserving_punctuation(
+                "This is a warmup sentence, with punctuation!",
                 max_dist=2,
             )
             logger.info(
@@ -72,8 +75,8 @@ class PreprocessingService:
         if truncated:
             text = text[:self.MAX_LENGTH]
 
-        # 3. Исправление опечаток.
-        text, _ = correct_text(text, max_dist=2)
+        # 3. Исправление опечаток с сохранением пунктуации.
+        text, _ = self._correct_preserving_punctuation(text, max_dist=2)
 
         return text, truncated
 
@@ -92,3 +95,38 @@ class PreprocessingService:
             return True
 
         return self._safe_detect(text) == "en"
+
+    def _correct_preserving_punctuation(
+        self,
+        text: str,
+        max_dist: int = 2,
+    ) -> tuple[str, list[tuple[int, str]]]:
+        """Исправляет опечатки, не удаляя знаки препинания.
+
+        Алгоритм:
+        1. Собираем позиции и сами знаки препинания в исходной строке.
+        2. Заменяем пунктуацию на пробелы — корректор видит «чистые» слова.
+        3. Отправляем текст в correct_text.
+        4. Вставляем знаки препинания обратно по сохранённым позициям.
+           Идём с конца, чтобы индексы не сбивались при вставке.
+
+        Возвращает (исправленный_текст, список_позиций_пунктуации).
+        """
+        # 1. Позиции и символы пунктуации.
+        punct_positions: list[tuple[int, str]] = [
+            (m.start(), m.group())
+            for m in self._PUNCT_PATTERN.finditer(text)
+        ]
+
+        text_without_punct = self._PUNCT_PATTERN.sub(" ", text)
+
+        corrected_text, _ = correct_text(text_without_punct, max_dist=max_dist)
+
+        corrected_chars = list(corrected_text)
+        for pos, char in reversed(punct_positions):
+            if pos <= len(corrected_chars):
+                corrected_chars.insert(pos, char)
+            else:
+                corrected_chars.append(char)
+
+        return "".join(corrected_chars), punct_positions
