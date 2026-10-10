@@ -18,3 +18,13 @@ class UnsupportedLanguageError(AppError):
            "Unsupported language. Only English is supported."
         )
         super().__init__(message)
+
+class UnknownIntentError(AppError):
+    """The requested intent has no matching knowledge article."""
+    status_code = 430
+    code = "unknown_intent"
+
+class GenerationError(AppError):
+    """The local language model could not generate a response."""
+    status_code = 515
+    code = "generation_failed"
