@@ -1,4 +1,11 @@
+import asyncio
+import logging
+import os
 from contextlib import asynccontextmanager
+
+if os.name == "nt":
+    os.environ.setdefault("ROCM_SDK_TARGET_FAMILY", "custom")
+
 from fastapi import FastAPI, Request
 from starlette.responses import JSONResponse
 
@@ -9,6 +16,16 @@ from services.generating import GenerateAnswerService
 from exceptions import AppError
 from routers import router
 # from http.http_client import close_client
+
+
+logger = logging.getLogger(__name__)
+
+
+async def _warmup_ollama(service: GenerateAnswerService) -> None:
+    try:
+        await asyncio.to_thread(service.warmup)
+    except RuntimeError as error:
+        logger.warning("Ollama model warmup failed: %s", error)
 
 
 # Если бдем использовать написанный http-клиент, его нужно закрывать при остановке fastApi
@@ -23,8 +40,14 @@ from routers import router
 async def lifespan(app: FastAPI):
     app.state.preprocessing_service = PreprocessingService()
     app.state.classification_service = ClassificationService()
-    app.state.generate_answer_service = GenerateAnswerService()
+    app.state.generate_answer_service = GenerateAnswerService(
+        app.state.classification_service
+    )
     try:
+        # Прогреваем Ollama в отдельном потоке, не задерживая запуск API.
+        app.state.ollama_warmup_task = asyncio.create_task(
+            _warmup_ollama(app.state.generate_answer_service)
+        )
         yield
     finally:
         app.state.preprocessing_service.close()
