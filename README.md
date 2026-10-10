@@ -46,6 +46,9 @@ Ollama должна быть доступна по адресу `http://127.0.0.
 
 ### 2. Установить Python-зависимости
 
+Для проекта используется Python 3.12 (версия указана в `.python-version`).
+PyTorch устанавливается в CPU-сборке.
+
 Из корня репозитория создайте виртуальное окружение:
 
 ```
@@ -101,6 +104,7 @@ UP
 
 Проверить генерацию ответа напрямую:
 
+Windows powershell
 ```
 curl --% -X POST "http://127.0.0.1:8000/assistant/generate-answer" -H "Content-Type: application/json" -d "{\"text\":\"When are the next sales?\"}"
 ```
@@ -119,4 +123,3 @@ Swagger UI доступен по адресу `http://127.0.0.1:8000/docs`.
 Для работы сайта нужны три процесса: Ollama, этот ML API и backend из
 `Market_AI_assistent_backend`. После запуска backend откройте
 `http://localhost:5005/`.
-
