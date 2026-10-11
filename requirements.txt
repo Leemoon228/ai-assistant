@@ -5,3 +5,4 @@ fasttext-langdetect>=1.0.5
 text-corrector>=0.1.0
 torch==2.14.1+cpu
 uvicorn>=0.38.0
+numpy>=2.5.4
