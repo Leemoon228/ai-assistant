@@ -19,6 +19,8 @@ DEFAULT_TEST_SET_PATH = PROJECT_DIR / "artifacts" / "classifier" / "data" / "tes
 DEFAULT_MODEL = "gemma4:e4b"
 DEFAULT_OLLAMA_URL = "http://127.0.0.1:11434"
 OLLAMA_TIMEOUT_SECONDS = 120
+OLLAMA_KEEP_ALIVE = -1
+OLLAMA_NUM_CTX = 8192
 
 
 def warmup_model(
@@ -27,14 +29,19 @@ def warmup_model(
     timeout: float = OLLAMA_TIMEOUT_SECONDS,
 ) -> None:
     request = Request(
-        f"{ollama_url.rstrip('/')}/api/generate",
+        f"{ollama_url.rstrip('/')}/api/chat",
         data=json.dumps(
             {
                 "model": model,
-                "prompt": "",
                 "stream": False,
-                "keep_alive": -1,
-                "options": {"num_predict": 1},
+                "keep_alive": OLLAMA_KEEP_ALIVE,
+                "think": False,
+                "messages": [{"role": "user", "content": "Warmup."}],
+                "options": {
+                    "temperature": 0.2,
+                    "num_ctx": OLLAMA_NUM_CTX,
+                    "num_predict": 1,
+                },
             }
         ).encode("utf-8"),
         headers={"Content-Type": "application/json"},
@@ -183,11 +190,12 @@ def generate_grounded_answer(
     payload = {
         "model": model,
         "stream": False,
+        "keep_alive": OLLAMA_KEEP_ALIVE,
         "think": False,
         "messages": build_messages(message, article, order_context),
         "options": {
             "temperature": 0.2,
-            "num_ctx": 8192,
+            "num_ctx": OLLAMA_NUM_CTX,
             "num_predict": 256,
         },
     }

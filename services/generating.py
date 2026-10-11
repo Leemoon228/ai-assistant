@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from threading import Lock
 
 from exceptions import GenerationError, UnknownIntentError
 from services.classification import ClassificationService
@@ -15,16 +16,22 @@ class GenerateAnswerService:
     def __init__(self, classification_service: ClassificationService) -> None:
         self._search_assistant = search_assistant
         self._classification_service = classification_service
+        self._warmup_lock = Lock()
+        self._model_warmed = False
 
     def close(self) -> None:
         pass
 
     def warmup(self) -> None:
-        self._search_assistant.warmup_model(
-            model=OLLAMA_MODEL,
-            ollama_url=OLLAMA_URL,
-            timeout=float(os.environ.get("OLLAMA_TIMEOUT_SECONDS", "120")),
-        )
+        with self._warmup_lock:
+            if self._model_warmed:
+                return
+            self._search_assistant.warmup_model(
+                model=OLLAMA_MODEL,
+                ollama_url=OLLAMA_URL,
+                timeout=float(os.environ.get("OLLAMA_TIMEOUT_SECONDS", "120")),
+            )
+            self._model_warmed = True
 
     def generate(
         self,
@@ -38,6 +45,7 @@ class GenerateAnswerService:
             intent = str(prediction["intent"])
 
         try:
+            self.warmup()
             answer = self._search_assistant.answer_query(
                 message=text,
                 intent=intent,
