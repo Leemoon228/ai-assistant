@@ -3,7 +3,8 @@ FROM python:3.12-slim AS base
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    OLLAMA_BASE_URL=http://130.49.188.18:11434
+    OLLAMA_BASE_URL=http://130.49.188.18:11434 \
+    FTLANG_CACHE="/temp/fasttext-cache"
 
 WORKDIR /app
 
@@ -28,6 +29,7 @@ COPY --from=builder /opt/venv /opt/venv
 RUN useradd --create-home --uid 10001 appuser
 
 COPY --chown=appuser:appuser . .
+COPY --chown=appuser:appuser fasttext-cache/ /temp/fasttext-cache/
 
 USER appuser
 

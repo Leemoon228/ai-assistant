@@ -1,58 +1,11 @@
-
 services:
   ai-assistant:
     build: .
     container_name: ai-assistant
     restart: unless-stopped
-
     ports:
       - "8000:8000"
-
     environment:
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-
     extra_hosts:
       - "host.docker.internal:host-gateway"
-
-#Olama в отдельном контейнере:
-#services:
-#  ai-assistant:
-#    build: .
-#    container_name: ai-assistant
-#    restart: unless-stopped
-#    ports:
-#      - "8085:8085"
-#    environment:
-#      OLLAMA_BASE_URL: http://ollama:11434
-#    depends_on:
-#      model-init:
-#        condition: service_completed_successfully
-#
-#  ollama:
-#    image: ollama/ollama
-#    container_name: ollama
-#    restart: unless-stopped
-#    volumes:
-#      - ollama_data:/root/.ollama
-#    healthcheck:
-#      test: ["CMD", "ollama", "list"]
-#      interval: 10s
-#      timeout: 5s
-#      retries: 12
-#
-#  model-init:
-#    image: ollama/ollama
-#    container_name: ollama-model-init
-#    restart: "no"
-#    depends_on:
-#      ollama:
-#        condition: service_healthy
-#    environment:
-#      OLLAMA_HOST: http://ollama:11434
-#    entrypoint: ["/bin/sh", "-c"]
-#    command: ["ollama pull gemma4:e4b"]
-#    volumes:
-#      - ollama_data:/root/.ollama
-#
-#volumes:
-#  ollama_data:

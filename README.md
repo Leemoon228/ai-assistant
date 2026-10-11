@@ -1,196 +1,153 @@
 # AI Assistant ML API
 
-Инструкция для запуска Python/FastAPI сервиса AI Assistant.
+Python/FastAPI сервис для предобработки текста, классификации запросов и генерации ответов с помощью Ollama.
 
-Сервис выполняет предобработку текста, классификацию запроса и генерацию ответа через локальную Ollama.
+## Требования
 
-## Что нужно
-- Ollama и модель `gemma4:e4b` (см. установку ниже)
-- Артефакты в этой папке:
+- Python 3.12 (версия указана в `.python-version`) для локального запуска
+- Ollama и модель `gemma4:e4b`
+- Артефакты проекта:
   - `artifacts\classifier\models\classifier_v1.pt`
   - `artifacts\knowledge_db\knowledge_db_v1.csv`
 
-## Установка Ollama и модели
+## Локальный запуск без Docker
 
-Предполагается что Ollama установлен и доступен через bash
+Для локальной разработки установите Python 3.12 (версия указана в
+`.python-version`) и создайте виртуальное окружение:
 
-После установки откройте новое окно PowerShell и скачайте модель Gemma 4 E4B
-из каталога Ollama:
-
-```
-ollama pull gemma4:e4b
-ollama list
-```
-
-В выводе `ollama list` должна присутствовать `gemma4:e4b`.
-
-## Запуск LLM
-
-### 1. Проверить Ollama
-
-Откройте отдельное окно терминала:
-
-```
-ollama list
-```
-
-В списке должна присутствовать `gemma4:e4b`. Обычно Ollama запускается
-вместе с Windows. Если она не запущена, стартуйте её в отдельном окне:
-
-```
-ollama serve
-```
-
-Сервис сначала проверяет Ollama на `http://127.0.0.1:11434`, затем пробует
-резервный адрес `http://130.49.188.18:11434`. Выбранный адрес появляется в
-логах. Переопределите адреса переменными `OLLAMA_BASE_URL` и
-`OLLAMA_FALLBACK_URL`; имя модели задаётся в `services\generating.py`.
-
-### 2. Установить Python-зависимости
-
-Для проекта используется Python 3.12 (версия указана в `.python-version`).
-PyTorch устанавливается в CPU-сборке.
-
-Из корня репозитория создайте виртуальное окружение:
-
-```
+```powershell
 python -m venv .venv
 ```
 
-Активируйте его в используемом терминале:
+Активируйте окружение командой для используемой оболочки:
 
+PowerShell:
 ```powershell
 .\.venv\Scripts\Activate.ps1
 ```
 
+Windows cmd:
 ```cmd
 .\.venv\Scripts\activate.bat
 ```
 
+Bash:
 ```bash
-source .venv/bin/activate
+source .venv/Scripts/activate
 ```
 
-После активации установите зависимости один раз:
-
-```
+Установить зависимости:
+```powershell
 python -m pip install -r requirements.txt
 ```
 
-### 3. Запустить ML API
+Запустите Ollama локально и убедитесь, что модель `gemma4:e4b` доступна:
 
-В другом окне терминала из корня репозитория:
-
+```powershell
+ollama serve
+ollama pull gemma4:e4b
+ollama list
 ```
+
+Затем запустите ML API из корня репозитория:
+
+```powershell
 python -m uvicorn main:app --host 127.0.0.1 --port 8000
 ```
 
-Если открыли новое окно терминала, сначала снова активируйте `.venv`. Оставьте
-окно с сервером открытым. Остановка сервиса: `Ctrl+C`.
+Если ошибка preprocessing, то нужно использовать кэш библиотеки fasttext из папки ./fasttext-cache перед запуском:
 
-### 4. Проверить API
-
-В новом окне терминала:
-
+Powershell:
+```powershell
+$env:FTLANG_CACHE = ".\fasttext-cache"
 ```
+
+Локальный запуск проверяет Ollama на `http://127.0.0.1:11434`, затем пробует
+резервный адрес (его хостит @Leemoon2 удалённо). Переопределить адреса можно переменными `OLLAMA_BASE_URL` и
+`OLLAMA_FALLBACK_URL`.
+
+## Запуск через Docker Compose
+
+Обычная команда запускает только ML API и **не запускает Ollama-контейнер**:
+
+```powershell
+docker compose up -d --build
+```
+Лога:
+```
+docker compose logs -f ai-assistant
+```
+
+В этом режиме API подключается к Ollama на хост-компьютере по адресу
+`http://host.docker.internal:11434`. Установите и запустите Ollama на хосте,
+если используете этот вариант.
+
+### Ollama в Docker (не советую)
+Сначала запустите только контейнер Ollama и загрузите модель. Ollama будет доступна на хосте по адресу `http://127.0.0.1:11434`:
+
+Контейнеру потребуется около 8GB RAM. При CPU сборке на 8 ядер, LLM отвечает 10+ сек.
+
+По-хорошему подвязать использование GPU из контейнера. Тут есть инфа как это сделать [docker ollama repo](https://hub.docker.com/r/ollama/ollama). Нужно либо установить nvidia container toolkit, либо для amd (linux only) запускать образ докера ollama с тегом rocm
+
+CPU only установка (примерно n секунд на генерацию ответа):
+```
+docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+```
+После установки ollama, нужно скачать в неё LLM модель.
+```
+docker exec -it ollama ollama pull gemma4:e4b
+docker exec -it ollama ollama list
+```
+
+API-контейнер обращается к Ollama через локалку 127.0.0.1 на хосте
+`http://127.0.0.0:11434`
+
+Для просмотра логов:
+```powershell
+docker logs -f ollama
+```
+
+Образ Ollama: [`ollama/ollama` на Docker Hub](https://hub.docker.com/r/ollama/ollama).
+Модель `gemma4:e4b` хранится в Docker volume `ollama_data` и не загружается
+заново при обычном перезапуске контейнера.
+
+
+
+## Проверка API
+
+API доступен по адресу `http://127.0.0.1:8000`; Swagger UI —
+`http://127.0.0.1:8000/docs`.
+
+Проверка состояния:
+
+```powershell
 curl http://127.0.0.1:8000/health
 ```
 
-Ожидаемый ответ:
-
-```
-status
-------
-UP
-```
-Проверить предобработку (исправление опечаток:
-
-```
-curl --% -X POST "http://127.0.0.1:8000/assistant/process" -H "Content-Type: application/json" -d "{\"text\":\"When are the next sales?\"}"
-```
-
-Проверить генерацию ответа напрямую:
-
-Windows powershell
-```
-curl --% -X POST "http://127.0.0.1:8000/assistant/generate-answer" -H "Content-Type: application/json" -d "{\"text\":\"When are the next sales?\"}"
-```
-
-При генерации API автоматически определяет `intent` классификатором. Другие endpoints:
-
-- `POST /assistant/process` — предобработка; JSON: `{"text":"..."}`.
-- `POST /assistant/classify` — классификация; JSON: `{"text":"..."}`.
-- `POST /assistant/generate-answer` — генерация ответа; JSON содержит `text`,
-  необязательный `order_context`.
-
-Swagger UI доступен по адресу `http://127.0.0.1:8000/docs`.
-
-## Запуск AI-Assistant через Docker Compose
-
-Сервис можно запустить двумя способами:
-- с Ollama, установленной локально;
-- с Ollama в отдельном Docker-контейнере.
-
-Сервис будет доступен по порту 8000.
-
-## Вариант 1. Ollama установлена локально
-
-В этом варианте Ollama запускается локально, а AI-ассистент работает в Docker-контейнере. Контейнер использует уже установленную модель, поэтому Ollama не нужно запускать через Docker Compose.
-
-### 1. Установка Ollama и загрузка модели (см. инструкцию ранее)
-### 2. Настройка Docker Compose
-
-В `docker-compose.yml` используйте конфигурацию с OLLAMA_BASE_URL: http://host.docker.internal:11434
-
-### 4. Запуск AI-ассистента
-
-Из каталога проекта выполните:
+Предобработка текста:
 
 ```powershell
-docker compose up -d --build
+curl.exe -X POST "http://127.0.0.1:8000/assistant/process" `
+  -H "Content-Type: application/json" `
+  -d "{\"text\":\"When are the next sales?\"}"
 ```
 
-Проверьте логи:
+Классификация запроса:
 
 ```powershell
-docker compose logs -f ai-assistant
+curl.exe -X POST "http://127.0.0.1:8000/assistant/classify" `
+  -H "Content-Type: application/json" `
+  -d "{\"text\":\"When are the next sales?\"}"
 ```
 
-### Вариант 2. Ollama в отдельном Docker-контейнере
+Генерация ответа:
 
-В этом режиме приложение и Ollama запускаются совместно через Docker Compose. Модель загружается автоматически при первом запуске и сохраняется в Docker volume.
-
-### 1. Замените конфигурацию из первого варианта закоменченным блоком в `docker-compose.yml`.
-### 2. Запустите сервисы:
-
-```bash
-docker compose up -d --build
+```powershell
+curl.exe -X POST "http://127.0.0.1:8000/assistant/generate-answer" `
+  -H "Content-Type: application/json" `
+  -d "{\"text\":\"When are the next sales?\"}"
 ```
 
-### 3. Проверьте состояние контейнеров и логи:
-
-```bash
-docker compose ps
-docker compose logs -f ai-assistant
-docker compose logs -f ollama
-```
-
-При первом запуске Ollama скачает модель `gemma4:e4b`. Время загрузки зависит от скорости интернета и размера модели.
-
-Для остановки сервисов:
-
-```bash
-docker compose down
-```
-
-При остановке Docker volume с моделью сохраняется. Чтобы удалить его вместе с загруженными моделями, выполните:
-
-```bash
-docker compose down -v
-```
-
-## Запуск всего приложения
-
-Для работы сайта нужны три процесса: Ollama, этот ML API и backend из
-`Market_AI_assistent_backend`. После запуска backend откройте
-`http://localhost:5005/`.
+При генерации API автоматически определяет `intent` с помощью классификатора.
+Для `POST /assistant/generate-answer` можно также передать необязательное поле
+`order_context` с проверенными сведениями о заказе.
