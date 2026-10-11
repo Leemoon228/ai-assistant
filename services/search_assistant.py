@@ -21,6 +21,19 @@ DEFAULT_OLLAMA_URL = "http://127.0.0.1:11434"
 OLLAMA_TIMEOUT_SECONDS = 120
 OLLAMA_KEEP_ALIVE = -1
 OLLAMA_NUM_CTX = 8192
+OLLAMA_HEALTHCHECK_TIMEOUT_SECONDS = 3
+
+
+def is_ollama_available(
+    ollama_url: str,
+    timeout: float = OLLAMA_HEALTHCHECK_TIMEOUT_SECONDS,
+) -> bool:
+    request = Request(f"{ollama_url.rstrip('/')}/api/version", method="GET")
+    try:
+        with urlopen(request, timeout=timeout):
+            return True
+    except (HTTPError, URLError, TimeoutError):
+        return False
 
 
 def warmup_model(

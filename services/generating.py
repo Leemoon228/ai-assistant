@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 from threading import Lock
@@ -7,8 +8,9 @@ from services.classification import ClassificationService
 from services import search_assistant
 
 
-#OLLAMA_URL = "http://127.0.0.1:11434"
-OLLAMA_URL = "http://130.49.188.18:11434" # remote Ollama endpoint when Leemoon serves it
+logger = logging.getLogger("uvicorn.error")
+
+DEFAULT_OLLAMA_FALLBACK_URL = "http://130.49.188.18:11434"
 OLLAMA_MODEL = "gemma4:e4b"
 
 
@@ -18,6 +20,14 @@ class GenerateAnswerService:
         self._classification_service = classification_service
         self._warmup_lock = Lock()
         self._model_warmed = False
+        self._ollama_url = os.environ.get(
+            "OLLAMA_BASE_URL",
+            self._search_assistant.DEFAULT_OLLAMA_URL,
+        ).rstrip("/")
+        self._ollama_fallback_url = os.environ.get(
+            "OLLAMA_FALLBACK_URL",
+            DEFAULT_OLLAMA_FALLBACK_URL,
+        ).rstrip("/")
 
     def close(self) -> None:
         pass
@@ -26,9 +36,22 @@ class GenerateAnswerService:
         with self._warmup_lock:
             if self._model_warmed:
                 return
+            endpoints = dict.fromkeys(
+                (self._ollama_url, self._ollama_fallback_url)
+            )
+            for endpoint in endpoints:
+                if self._search_assistant.is_ollama_available(endpoint):
+                    self._ollama_url = endpoint
+                    logger.info("Using Ollama endpoint: %s", endpoint)
+                    break
+            else:
+                raise RuntimeError(
+                    "Ollama is unavailable at configured endpoints: "
+                    f"{', '.join(endpoints)}"
+                )
             self._search_assistant.warmup_model(
                 model=OLLAMA_MODEL,
-                ollama_url=OLLAMA_URL,
+                ollama_url=self._ollama_url,
                 timeout=float(os.environ.get("OLLAMA_TIMEOUT_SECONDS", "120")),
             )
             self._model_warmed = True
@@ -57,7 +80,7 @@ class GenerateAnswerService:
                     / "knowledge_db_v1.csv"
                 ),
                 model=OLLAMA_MODEL,
-                ollama_url=OLLAMA_URL,
+                ollama_url=self._ollama_url,
                 timeout=float(os.environ.get("OLLAMA_TIMEOUT_SECONDS", "120")),
             )
         except ValueError as error:
