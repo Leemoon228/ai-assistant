@@ -151,3 +151,13 @@ curl.exe -X POST "http://127.0.0.1:8000/assistant/generate-answer" `
 При генерации API автоматически определяет `intent` с помощью классификатора.
 Для `POST /assistant/generate-answer` можно также передать необязательное поле
 `order_context` с проверенными сведениями о заказе.
+
+## Логи и метрики
+
+Логи — JSON-строки (`json_logging.py`, подключается в `main.py`):
+`timestamp`, `level`, `service: "ml"`, `app_version`, `message`. `trace_id`
+уже встроен в текст сообщения (как и раньше, через `X-Trace-Id` от бэкенда).
+
+`GET /metrics` — Prometheus-метрики через `prometheus-fastapi-instrumentator`
+(латентность и количество запросов по эндпоинтам). Полная схема сбора
+(Grafana+Loki+Prometheus) — в корневом `MONITORING.md`.

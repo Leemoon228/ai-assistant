@@ -8,8 +8,10 @@ if os.name == "nt":
     os.environ.setdefault("ROCM_SDK_TARGET_FAMILY", "custom")
 
 from fastapi import FastAPI, Request
+from prometheus_fastapi_instrumentator import Instrumentator
 from starlette.responses import JSONResponse
 
+from json_logging import configure_json_logging
 from services.preprocessing import PreprocessingService
 from services.classification import ClassificationService
 from services.generating import GenerateAnswerService
@@ -19,6 +21,7 @@ from routers import router
 # from http.http_client import close_client
 
 
+configure_json_logging()
 logger = logging.getLogger(__name__)
 
 
@@ -65,12 +68,13 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan, title="AI Assistant ML Service", version="0.1.0") #, lifespan=lifespan)
 app.include_router(router)
-
-app.include_router(router)
+Instrumentator().instrument(app).expose(app)
 
 @app.exception_handler(AppError)
 async def app_error_handler(request: Request, exc: AppError):
-    return JSONResponse(
+    trace_id = request.headers.get("x-trace-id", "unknown")
+    logger.warning("[%s] %s: %s", trace_id, exc.code, exc.message)
+    response = JSONResponse(
         status_code=exc.status_code,
         content={
             "error": {
@@ -79,6 +83,8 @@ async def app_error_handler(request: Request, exc: AppError):
             }
         },
     )
+    response.headers["X-Trace-Id"] = trace_id
+    return response
 
 @app.get("/health")
 def health():
