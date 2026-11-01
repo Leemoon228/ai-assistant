@@ -112,21 +112,17 @@ class PreprocessingService:
 
         Возвращает (исправленный_текст, список_позиций_пунктуации).
         """
-        # 1. Позиции и символы пунктуации.
-        punct_positions: list[tuple[int, str]] = [
-            (m.start(), m.group())
-            for m in self._PUNCT_PATTERN.finditer(text)
+        punct_positions = [
+            (m.start(), m.group()) for m in self._PUNCT_PATTERN.finditer(text)
         ]
-
-        text_without_punct = self._PUNCT_PATTERN.sub(" ", text)
-
-        corrected_text, _ = correct_text(text_without_punct, max_dist=max_dist)
-
-        corrected_chars = list(corrected_text)
-        for pos, char in reversed(punct_positions):
-            if pos <= len(corrected_chars):
-                corrected_chars.insert(pos, char)
-            else:
-                corrected_chars.append(char)
-
-        return "".join(corrected_chars), punct_positions
+        # Корректируем только словесные сегменты, сохраняя пробелы и
+        # пунктуацию в точности как во входном тексте.
+        segments = re.split(r"(\s+|[.,!?;:'\"()\[\]{}\-—–…]+)", text)
+        output = []
+        for segment in segments:
+            if not segment or segment.isspace() or self._PUNCT_PATTERN.fullmatch(segment):
+                output.append(segment)
+                continue
+            corrected, _ = correct_text(segment, max_dist=max_dist)
+            if not isinstance(corrected, str):
+                raise TypeError("correct_text must return a string")
