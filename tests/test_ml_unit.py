@@ -1,14 +1,12 @@
-import csv
 import math
-from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
 import torch
 
 from services import classification as cl
-from services import search_assistant as sa
 from services import generating as gen
+from services import search_assistant as sa
 
 
 @pytest.mark.parametrize('text,expected', [
