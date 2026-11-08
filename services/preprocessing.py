@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class PreprocessingService:
-    MAX_LENGTH = 200
+    MAX_LENGTH = 300
 
     # Регулярное выражение для поиска знаков препинания.
     _PUNCT_PATTERN = re.compile(r"[.,!?;:'\"()\[\]{}\-—–…]")

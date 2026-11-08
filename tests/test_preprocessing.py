@@ -24,10 +24,10 @@ def test_length_boundary_and_language_before_truncation(monkeypatch):
     monkeypatch.setattr(pp, 'detect', detect)
     monkeypatch.setattr(pp, 'correct_text', lambda text, max_dist: (text, []))
     service = pp.PreprocessingService()
-    assert service.process('a' * 200)[1] is False
-    text, truncated = service.process('a' * 201)
-    assert truncated is True and len(text) == 200
-    assert len(observed[-1]) == 201
+    assert service.process('a' * 300)[1] is False
+    text, truncated = service.process('a' * 301)
+    assert truncated is True and len(text) == 300
+    assert len(observed[-1]) == 301
 
 
 def test_detector_failure_rejects_fail_closed(monkeypatch):
