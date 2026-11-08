@@ -1,0 +1,328 @@
+{
+  "synthetic": true,
+  "assumptions": {
+    "intent_distribution": "uniform over knowledge intents; not observed traffic",
+    "utterances": "handwritten English templates, not real customer requests",
+    "history": "one prior user CSV row = one counted history message; excludes bot replies",
+    "lengths": "separate fixed-length counterfactual scenarios, not observed session lengths",
+    "followups": "scripted repetition, independent of generated answer quality",
+    "no_aggregate_share": "scenario weights are unknown; do not average as a production estimate"
+  },
+  "configuration": {
+    "knowledge": "/artifacts/knowledge_db/knowledge_db_v1.csv",
+    "output": "work/operator-estimate",
+    "lengths": [
+      1
+    ],
+    "variants": 3,
+    "run": true,
+    "base_url": "http://127.0.0.1:8000",
+    "timeout": 180,
+    "preprocess": false,
+    "skip_generation": false,
+    "sessions_per_day": 1000.0,
+    "handle_minutes": 8.0,
+    "followup_probability": null,
+    "clarification_mode": "question-mark"
+  },
+  "scenarios": {
+    "1": {
+      "sessions": 138,
+      "messages": 138,
+      "decisions": {
+        "bot": 135,
+        "handoff": 3
+      },
+      "handoff_reasons": {
+        "human_agent": 3
+      },
+      "transferred_sessions": 3,
+      "unresolved_sessions": 0,
+      "operator_session_share": 0.021739130434782608,
+      "operator_session_share_bounds": [
+        0.021739130434782608,
+        0.021739130434782608
+      ],
+      "operator_messages": 3,
+      "api_errors": 0,
+      "generation_successes": 135,
+      "clarification_signals": {
+        "none": 95,
+        "question_mark_heuristic": 40
+      },
+      "classification_by_expected_intent": {
+        "add_product": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "availability": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "availability_in_store": {
+          "classified": 3,
+          "correct": 0,
+          "handoffs": 0
+        },
+        "availability_online": {
+          "classified": 3,
+          "correct": 0,
+          "handoffs": 0
+        },
+        "cancel_order": {
+          "classified": 3,
+          "correct": 2,
+          "handoffs": 0
+        },
+        "change_account": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "change_order": {
+          "classified": 3,
+          "correct": 0,
+          "handoffs": 0
+        },
+        "close_account": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "customer_service": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "damaged_delivery": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "delivery_issue": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "delivery_time": {
+          "classified": 3,
+          "correct": 1,
+          "handoffs": 0
+        },
+        "exchange_product": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "exchange_product_in_store": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "human_agent": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 3
+        },
+        "missing_item": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "open_account": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "order_history": {
+          "classified": 3,
+          "correct": 0,
+          "handoffs": 0
+        },
+        "pay": {
+          "classified": 3,
+          "correct": 0,
+          "handoffs": 0
+        },
+        "payment_issue": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "payment_methods": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "product_information": {
+          "classified": 3,
+          "correct": 1,
+          "handoffs": 0
+        },
+        "product_issue": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "recover_password": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "refund_policy": {
+          "classified": 3,
+          "correct": 0,
+          "handoffs": 0
+        },
+        "refund_status": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "remove_product": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "request_invoice": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "request_refund": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "request_right_to_rectification": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "return_policy": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "return_product": {
+          "classified": 3,
+          "correct": 1,
+          "handoffs": 0
+        },
+        "return_product_in_store": {
+          "classified": 3,
+          "correct": 0,
+          "handoffs": 0
+        },
+        "return_product_online": {
+          "classified": 3,
+          "correct": 0,
+          "handoffs": 0
+        },
+        "sales_period": {
+          "classified": 3,
+          "correct": 0,
+          "handoffs": 0
+        },
+        "shipping_costs": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "store_location": {
+          "classified": 3,
+          "correct": 1,
+          "handoffs": 0
+        },
+        "store_opening_hours": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "submit_feedback": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "submit_product_feedback": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "submit_product_idea": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "technical_issue": {
+          "classified": 3,
+          "correct": 0,
+          "handoffs": 0
+        },
+        "track_delivery": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "track_order": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "use_app": {
+          "classified": 3,
+          "correct": 3,
+          "handoffs": 0
+        },
+        "wrong_item": {
+          "classified": 3,
+          "correct": 0,
+          "handoffs": 0
+        }
+      },
+      "forecast": {
+        "operator_sessions_per_day_bounds": [
+          21.73913043478261,
+          21.73913043478261
+        ],
+        "operator_hours_per_day_bounds": [
+          2.898550724637681,
+          2.898550724637681
+        ]
+      },
+      "assumptions": {
+        "session_order": "CSV order within each session; no sorting",
+        "history": "explicit column",
+        "generation_enabled": true,
+        "preprocessing_enabled": false,
+        "handoff_is_terminal": true,
+        "errors_are_not_handoffs": true,
+        "knowledge_is_not_traffic_distribution": true
+      }
+    }
+  },
+  "rough_probability_model": {
+    "model": "h + (1-h) * p^3",
+    "p_source": "question-mark",
+    "generated_answers": 135,
+    "answers_with_followup_signal": 40,
+    "observed_followup_signal_share": 0.2962962962962963,
+    "p_used": 0.2962962962962963,
+    "history_handoff_probability_given_bot": 0.026012294873748915,
+    "initial_human_handoff_share": 0.021739130434782608,
+    "missing_bot_generations": 0,
+    "estimated_total_operator_share": 0.04718594063736307,
+    "operator_sessions_per_day": 47.18594063736307,
+    "operator_hours_per_day": 6.291458751648409,
+    "assumptions": [
+      "one initial utterance per synthetic session; equal intent weights",
+      "p is identical and independent across three consecutive bot turns",
+      "every bot followup leads to another customer message",
+      "human_agent routing is accounted for on the first turn only",
+      "no later unsolicited customer followups or other escalation rules",
+      "question marks are a noisy proxy, not a quality or resolution judgment"
+    ]
+  }
+}
