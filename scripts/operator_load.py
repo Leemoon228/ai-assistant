@@ -19,12 +19,36 @@ def handoff(history, prediction):
     return None
 
 
-def clarification_signal(answer):
-    if answer.get("type") == "clarification" or answer.get("follow_up_question"):
-        return "structured"
-    if "?" in str(answer.get("content", "")):
-        return "question_mark_heuristic"
-    return "none"
+def valid_confidence(value):
+    return (not isinstance(value, bool) and isinstance(value, (int, float))
+            and math.isfinite(value) and 0 <= value <= 1)
+
+
+def clarification_assessment(prediction, generation, classify_threshold, generate_threshold):
+    """Three-valued OR: one low confidence suffices; missing data is not high confidence."""
+    classification = prediction.get("confidence") if prediction else None
+    answer = generation.get("confidence") if generation else None
+    values = {"classification": classification, "generation": answer}
+    thresholds = {"classification": classify_threshold, "generation": generate_threshold}
+    low = [name for name, value in values.items()
+           if valid_confidence(value) and value < thresholds[name]]
+    missing = [name for name, value in values.items() if not valid_confidence(value)]
+    required = True if low else (None if missing else False)
+    return {"required": required, "low_confidence_sources": low,
+            "missing_or_invalid_sources": missing, "confidences": values,
+            "thresholds": thresholds}
+
+
+def add_threshold_arguments(parser):
+    parser.add_argument("--classify-threshold", type=float, default=0.85,
+                        help="Clarify if classify.confidence is strictly below this value")
+    parser.add_argument("--generate-threshold", type=float, default=0.85,
+                        help="Clarify if generate-answer.confidence is strictly below this value")
+
+
+def validate_thresholds(parser, args):
+    if not all(valid_confidence(v) for v in (args.classify_threshold, args.generate_threshold)):
+        parser.error("Confidence thresholds must be finite numbers between 0 and 1")
 
 
 def post(base, endpoint, payload, timeout):
@@ -119,13 +143,16 @@ def replay(args, rows, send=post):
                         if args.order_context:
                             payload["order_context"] = args.order_context
                         generated, latency = send(args.base_url, "generate-answer", payload, args.timeout)
-                        record.update(generation=generated, generate_ms=latency,
-                                      clarification_signal=clarification_signal(generated))
+                        record.update(generation=generated, generate_ms=latency)
         except (RuntimeError, KeyError, TypeError) as exc:
             record["error"] = str(exc)
             if not record["decision"]:
                 record["decision"] = "unknown"
                 uncertain.add(session)
+        if record["decision"] == "bot":
+            record["clarification"] = clarification_assessment(
+                record["prediction"], record["generation"],
+                args.classify_threshold, args.generate_threshold)
         results.append(record)
         # Flush every row so a slow or interrupted run retains completed requests.
         args.results_stream.write(json.dumps(record, ensure_ascii=False) + "\n")
@@ -145,8 +172,16 @@ def replay(args, rows, send=post):
         "operator_messages": decisions["handoff"] + decisions["operator"],
         "api_errors": sum(bool(r["error"]) for r in results),
         "generation_successes": sum(r["generation"] is not None for r in results),
-        "clarification_signals": dict(Counter(r["clarification_signal"] for r in results
-                                             if r.get("clarification_signal") is not None)),
+        "clarification": {
+            "rule": "classify.confidence < classify_threshold OR generate-answer.confidence < generate_threshold",
+            "classify_threshold": args.classify_threshold,
+            "generate_threshold": args.generate_threshold,
+            "required": sum(r.get("clarification", {}).get("required") is True for r in results),
+            "not_required": sum(r.get("clarification", {}).get("required") is False for r in results),
+            "unknown": sum(r["decision"] == "bot" and r["clarification"]["required"] is None for r in results),
+            "low_classification": sum("classification" in r.get("clarification", {}).get("low_confidence_sources", []) for r in results),
+            "low_generation": sum("generation" in r.get("clarification", {}).get("low_confidence_sources", []) for r in results),
+        },
         "classification_by_expected_intent": {
             intent: {
                 "classified": sum(r["expected_intent"] == intent and r["prediction"] is not None for r in results),
@@ -193,7 +228,9 @@ def main():
     parser.add_argument("--sessions-per-day", type=float)
     parser.add_argument("--handle-minutes", type=float)
     parser.add_argument("--output", type=Path, default=Path("operator-load-results"))
+    add_threshold_arguments(parser)
     args = parser.parse_args()
+    validate_thresholds(parser, args)
     if (args.default_history < 0 or not math.isfinite(args.timeout) or args.timeout <= 0 or len(args.delimiter) != 1
             or (args.sample_sessions is not None and args.sample_sessions <= 0)
             or any(v is not None and (not math.isfinite(v) or v < 0)

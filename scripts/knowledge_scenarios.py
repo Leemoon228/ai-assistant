@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
-from operator_load import replay
+from operator_load import replay, add_threshold_arguments, validate_thresholds
 
 
 def rough_model(summary, args):
@@ -14,14 +14,13 @@ def rough_model(summary, args):
     human = summary["handoff_reasons"].get("human_agent", 0)
     unknown = summary["unresolved_sessions"]
     successes = summary["generation_successes"]
-    signals = summary["clarification_signals"]
-    count = signals.get("structured", 0)
-    if args.clarification_mode == "question-mark":
-        count += signals.get("question_mark_heuristic", 0)
-    observed = count / successes if successes else None
+    clarification = summary["clarification"]
+    count = clarification["required"]
+    evaluated = count + clarification["not_required"]
+    observed = count / evaluated if evaluated else None
     p = args.followup_probability if args.followup_probability is not None else observed
     missing_bot_generations = summary["decisions"].get("bot", 0) - successes
-    complete = not unknown and (args.followup_probability is not None or missing_bot_generations == 0)
+    complete = not unknown and (args.followup_probability is not None or clarification["unknown"] == 0)
     # If every request is handed off immediately, p is immaterial.
     if human == total:
         share = 1.0
@@ -29,9 +28,12 @@ def rough_model(summary, args):
         share = human / total + (1 - human / total) * p ** 3 if p is not None and complete else None
     return {
         "model": "h + (1-h) * p^3",
-        "p_source": "manual assumption" if args.followup_probability is not None else args.clarification_mode,
-        "generated_answers": successes, "answers_with_followup_signal": count,
-        "observed_followup_signal_share": observed,
+        "p_source": "manual assumption" if args.followup_probability is not None else "confidence_thresholds_or",
+        "generated_answers": successes, "requests_requiring_clarification": count,
+        "clarification_evaluated": evaluated, "clarification_unknown": clarification["unknown"],
+        "observed_clarification_share": observed,
+        "classify_threshold": clarification["classify_threshold"],
+        "generate_threshold": clarification["generate_threshold"],
         "p_used": p, "history_handoff_probability_given_bot": None if p is None else p ** 3,
         "initial_human_handoff_share": human / total if not unknown else None,
         "missing_bot_generations": missing_bot_generations,
@@ -44,7 +46,8 @@ def rough_model(summary, args):
                         "every bot followup leads to another customer message",
                         "human_agent routing is accounted for on the first turn only",
                         "no later unsolicited customer followups or other escalation rules",
-                        "question marks are a noisy proxy, not a quality or resolution judgment"],
+                        "clarification is required if either confidence is strictly below its threshold",
+                        "generate-answer.confidence currently measures internal classification, not answer quality"],
     }
 
 
@@ -148,8 +151,9 @@ def main():
     parser.add_argument("--sessions-per-day", type=float)
     parser.add_argument("--handle-minutes", type=float)
     parser.add_argument("--followup-probability", type=float, help="Manually assumed p instead of answer-derived estimate")
-    parser.add_argument("--clarification-mode", choices=["structured", "question-mark"], default="question-mark")
+    add_threshold_arguments(parser)
     args = parser.parse_args()
+    validate_thresholds(parser, args)
     if args.followup_probability is not None and not 0 <= args.followup_probability <= 1:
         parser.error("Followup probability must be between 0 and 1")
     if any(length < 1 for length in args.lengths) or len(set(args.lengths)) != len(args.lengths):
