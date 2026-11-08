@@ -1,0 +1,139 @@
+session_id,text,history_count,intent
+close_account-0,How do I delete my account?,0,close_account
+close_account-1,"Hello, I need some help. How do I delete my account?",0,close_account
+close_account-2,How do I delete my account? Could you help me with this?,0,close_account
+recover_password-0,I forgot my password. How can I reset it?,0,recover_password
+recover_password-1,"Hello, I need some help. I forgot my password. How can I reset it?",0,recover_password
+recover_password-2,I forgot my password. How can I reset it? Could you help me with this?,0,recover_password
+order_history-0,Where can I see my previous orders?,0,order_history
+order_history-1,"Hello, I need some help. Where can I see my previous orders?",0,order_history
+order_history-2,Where can I see my previous orders? Could you help me with this?,0,order_history
+open_account-0,How can I create an account?,0,open_account
+open_account-1,"Hello, I need some help. How can I create an account?",0,open_account
+open_account-2,How can I create an account? Could you help me with this?,0,open_account
+change_account-0,How can I update my account details?,0,change_account
+change_account-1,"Hello, I need some help. How can I update my account details?",0,change_account
+change_account-2,How can I update my account details? Could you help me with this?,0,change_account
+use_app-0,How do I use your mobile app?,0,use_app
+use_app-1,"Hello, I need some help. How do I use your mobile app?",0,use_app
+use_app-2,How do I use your mobile app? Could you help me with this?,0,use_app
+technical_issue-0,Your website keeps crashing when I try to use it.,0,technical_issue
+technical_issue-1,"Hello, I need some help. Your website keeps crashing when I try to use it.",0,technical_issue
+technical_issue-2,Your website keeps crashing when I try to use it. Could you help me with this?,0,technical_issue
+remove_product-0,How do I remove an item from my shopping cart?,0,remove_product
+remove_product-1,"Hello, I need some help. How do I remove an item from my shopping cart?",0,remove_product
+remove_product-2,How do I remove an item from my shopping cart? Could you help me with this?,0,remove_product
+add_product-0,How do I add an item to my cart?,0,add_product
+add_product-1,"Hello, I need some help. How do I add an item to my cart?",0,add_product
+add_product-2,How do I add an item to my cart? Could you help me with this?,0,add_product
+human_agent-0,Please connect me to a human agent.,0,human_agent
+human_agent-1,"Hello, I need some help. Please connect me to a human agent.",0,human_agent
+human_agent-2,Please connect me to a human agent. Could you help me with this?,0,human_agent
+customer_service-0,How can I contact customer service?,0,customer_service
+customer_service-1,"Hello, I need some help. How can I contact customer service?",0,customer_service
+customer_service-2,How can I contact customer service? Could you help me with this?,0,customer_service
+wrong_item-0,I received a different item from the one I ordered.,0,wrong_item
+wrong_item-1,"Hello, I need some help. I received a different item from the one I ordered.",0,wrong_item
+wrong_item-2,I received a different item from the one I ordered. Could you help me with this?,0,wrong_item
+delivery_issue-0,There is a problem with my delivery. Can you help?,0,delivery_issue
+delivery_issue-1,"Hello, I need some help. There is a problem with my delivery. Can you help?",0,delivery_issue
+delivery_issue-2,There is a problem with my delivery. Can you help? Could you help me with this?,0,delivery_issue
+track_delivery-0,How can I track my delivery?,0,track_delivery
+track_delivery-1,"Hello, I need some help. How can I track my delivery?",0,track_delivery
+track_delivery-2,How can I track my delivery? Could you help me with this?,0,track_delivery
+damaged_delivery-0,My package arrived damaged. What should I do?,0,damaged_delivery
+damaged_delivery-1,"Hello, I need some help. My package arrived damaged. What should I do?",0,damaged_delivery
+damaged_delivery-2,My package arrived damaged. What should I do? Could you help me with this?,0,damaged_delivery
+shipping_costs-0,How much does shipping cost?,0,shipping_costs
+shipping_costs-1,"Hello, I need some help. How much does shipping cost?",0,shipping_costs
+shipping_costs-2,How much does shipping cost? Could you help me with this?,0,shipping_costs
+delivery_time-0,How long does delivery take?,0,delivery_time
+delivery_time-1,"Hello, I need some help. How long does delivery take?",0,delivery_time
+delivery_time-2,How long does delivery take? Could you help me with this?,0,delivery_time
+missing_item-0,An item is missing from my package.,0,missing_item
+missing_item-1,"Hello, I need some help. An item is missing from my package.",0,missing_item
+missing_item-2,An item is missing from my package. Could you help me with this?,0,missing_item
+submit_product_idea-0,How can I suggest an idea for a new product?,0,submit_product_idea
+submit_product_idea-1,"Hello, I need some help. How can I suggest an idea for a new product?",0,submit_product_idea
+submit_product_idea-2,How can I suggest an idea for a new product? Could you help me with this?,0,submit_product_idea
+submit_product_feedback-0,I would like to leave feedback about a product.,0,submit_product_feedback
+submit_product_feedback-1,"Hello, I need some help. I would like to leave feedback about a product.",0,submit_product_feedback
+submit_product_feedback-2,I would like to leave feedback about a product. Could you help me with this?,0,submit_product_feedback
+submit_feedback-0,How can I send feedback about your service?,0,submit_feedback
+submit_feedback-1,"Hello, I need some help. How can I send feedback about your service?",0,submit_feedback
+submit_feedback-2,How can I send feedback about your service? Could you help me with this?,0,submit_feedback
+request_invoice-0,Can I get an invoice for my order?,0,request_invoice
+request_invoice-1,"Hello, I need some help. Can I get an invoice for my order?",0,request_invoice
+request_invoice-2,Can I get an invoice for my order? Could you help me with this?,0,request_invoice
+cancel_order-0,I want to cancel my order.,0,cancel_order
+cancel_order-1,"Hello, I need some help. I want to cancel my order.",0,cancel_order
+cancel_order-2,I want to cancel my order. Could you help me with this?,0,cancel_order
+track_order-0,Where is my order? How can I track its status?,0,track_order
+track_order-1,"Hello, I need some help. Where is my order? How can I track its status?",0,track_order
+track_order-2,Where is my order? How can I track its status? Could you help me with this?,0,track_order
+change_order-0,Can I change an order I have already placed?,0,change_order
+change_order-1,"Hello, I need some help. Can I change an order I have already placed?",0,change_order
+change_order-2,Can I change an order I have already placed? Could you help me with this?,0,change_order
+payment_issue-0,My payment failed. What should I do?,0,payment_issue
+payment_issue-1,"Hello, I need some help. My payment failed. What should I do?",0,payment_issue
+payment_issue-2,My payment failed. What should I do? Could you help me with this?,0,payment_issue
+payment_methods-0,Which payment methods do you accept?,0,payment_methods
+payment_methods-1,"Hello, I need some help. Which payment methods do you accept?",0,payment_methods
+payment_methods-2,Which payment methods do you accept? Could you help me with this?,0,payment_methods
+pay-0,How do I pay for my order?,0,pay
+pay-1,"Hello, I need some help. How do I pay for my order?",0,pay
+pay-2,How do I pay for my order? Could you help me with this?,0,pay
+availability_online-0,Is this product available to buy online?,0,availability_online
+availability_online-1,"Hello, I need some help. Is this product available to buy online?",0,availability_online
+availability_online-2,Is this product available to buy online? Could you help me with this?,0,availability_online
+product_issue-0,The product I bought does not work properly.,0,product_issue
+product_issue-1,"Hello, I need some help. The product I bought does not work properly.",0,product_issue
+product_issue-2,The product I bought does not work properly. Could you help me with this?,0,product_issue
+exchange_product_in_store-0,Can I exchange my product at a physical store?,0,exchange_product_in_store
+exchange_product_in_store-1,"Hello, I need some help. Can I exchange my product at a physical store?",0,exchange_product_in_store
+exchange_product_in_store-2,Can I exchange my product at a physical store? Could you help me with this?,0,exchange_product_in_store
+exchange_product-0,How can I exchange this product for another one?,0,exchange_product
+exchange_product-1,"Hello, I need some help. How can I exchange this product for another one?",0,exchange_product
+exchange_product-2,How can I exchange this product for another one? Could you help me with this?,0,exchange_product
+product_information-0,Where can I find the product specifications?,0,product_information
+product_information-1,"Hello, I need some help. Where can I find the product specifications?",0,product_information
+product_information-2,Where can I find the product specifications? Could you help me with this?,0,product_information
+availability-0,Is this product in stock?,0,availability
+availability-1,"Hello, I need some help. Is this product in stock?",0,availability
+availability-2,Is this product in stock? Could you help me with this?,0,availability
+availability_in_store-0,Is this item available in your physical store?,0,availability_in_store
+availability_in_store-1,"Hello, I need some help. Is this item available in your physical store?",0,availability_in_store
+availability_in_store-2,Is this item available in your physical store? Could you help me with this?,0,availability_in_store
+refund_status-0,What is the status of my refund?,0,refund_status
+refund_status-1,"Hello, I need some help. What is the status of my refund?",0,refund_status
+refund_status-2,What is the status of my refund? Could you help me with this?,0,refund_status
+return_product_in_store-0,How can I return an item at your store?,0,return_product_in_store
+return_product_in_store-1,"Hello, I need some help. How can I return an item at your store?",0,return_product_in_store
+return_product_in_store-2,How can I return an item at your store? Could you help me with this?,0,return_product_in_store
+return_policy-0,What is your return policy?,0,return_policy
+return_policy-1,"Hello, I need some help. What is your return policy?",0,return_policy
+return_policy-2,What is your return policy? Could you help me with this?,0,return_policy
+refund_policy-0,What are the conditions for getting a refund?,0,refund_policy
+refund_policy-1,"Hello, I need some help. What are the conditions for getting a refund?",0,refund_policy
+refund_policy-2,What are the conditions for getting a refund? Could you help me with this?,0,refund_policy
+return_product-0,How can I return a product?,0,return_product
+return_product-1,"Hello, I need some help. How can I return a product?",0,return_product
+return_product-2,How can I return a product? Could you help me with this?,0,return_product
+return_product_online-0,How can I return a product I purchased online?,0,return_product_online
+return_product_online-1,"Hello, I need some help. How can I return a product I purchased online?",0,return_product_online
+return_product_online-2,How can I return a product I purchased online? Could you help me with this?,0,return_product_online
+request_refund-0,I would like to request a refund.,0,request_refund
+request_refund-1,"Hello, I need some help. I would like to request a refund.",0,request_refund
+request_refund-2,I would like to request a refund. Could you help me with this?,0,request_refund
+sales_period-0,When is your next sale?,0,sales_period
+sales_period-1,"Hello, I need some help. When is your next sale?",0,sales_period
+sales_period-2,When is your next sale? Could you help me with this?,0,sales_period
+store_opening_hours-0,What time does your store open and close?,0,store_opening_hours
+store_opening_hours-1,"Hello, I need some help. What time does your store open and close?",0,store_opening_hours
+store_opening_hours-2,What time does your store open and close? Could you help me with this?,0,store_opening_hours
+store_location-0,Where is your nearest store?,0,store_location
+store_location-1,"Hello, I need some help. Where is your nearest store?",0,store_location
+store_location-2,Where is your nearest store? Could you help me with this?,0,store_location
+request_right_to_rectification-0,How can I exercise my right to correct my personal data?,0,request_right_to_rectification
+request_right_to_rectification-1,"Hello, I need some help. How can I exercise my right to correct my personal data?",0,request_right_to_rectification
+request_right_to_rectification-2,How can I exercise my right to correct my personal data? Could you help me with this?,0,request_right_to_rectification
