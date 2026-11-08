@@ -9,8 +9,8 @@
     "no_aggregate_share": "scenario weights are unknown; do not average as a production estimate"
   },
   "configuration": {
-    "knowledge": "/artifacts/knowledge_db/knowledge_db_v1.csv",
-    "output": "work/operator-estimate",
+    "knowledge": "/Users/andreymarusin/Polina/ИТМО/Семестр 1/Когнетивные технологии/assistant-operator-scripts/ai-assistant/artifacts/knowledge_db/knowledge_db_v1.csv",
+    "output": "work/with_threshold",
     "lengths": [
       1
     ],
@@ -47,8 +47,8 @@
       "api_errors": 0,
       "generation_successes": 135,
       "clarification_signals": {
-        "none": 95,
-        "question_mark_heuristic": 40
+        "none": 98,
+        "question_mark_heuristic": 37
       },
       "classification_by_expected_intent": {
         "add_product": {
@@ -307,15 +307,15 @@
     "model": "h + (1-h) * p^3",
     "p_source": "question-mark",
     "generated_answers": 135,
-    "answers_with_followup_signal": 40,
-    "observed_followup_signal_share": 0.2962962962962963,
-    "p_used": 0.2962962962962963,
-    "history_handoff_probability_given_bot": 0.026012294873748915,
+    "answers_with_followup_signal": 37,
+    "observed_followup_signal_share": 0.2740740740740741,
+    "p_used": 0.2740740740740741,
+    "history_handoff_probability_given_bot": 0.020587512066250067,
     "initial_human_handoff_share": 0.021739130434782608,
     "missing_bot_generations": 0,
-    "estimated_total_operator_share": 0.04718594063736307,
-    "operator_sessions_per_day": 47.18594063736307,
-    "operator_hours_per_day": 6.291458751648409,
+    "estimated_total_operator_share": 0.0418790878908968,
+    "operator_sessions_per_day": 41.879087890896805,
+    "operator_hours_per_day": 5.583878385452907,
     "assumptions": [
       "one initial utterance per synthetic session; equal intent weights",
       "p is identical and independent across three consecutive bot turns",
