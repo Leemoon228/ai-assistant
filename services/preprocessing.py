@@ -126,3 +126,6 @@ class PreprocessingService:
             corrected, _ = correct_text(segment, max_dist=max_dist)
             if not isinstance(corrected, str):
                 raise TypeError("correct_text must return a string")
+            output.append(corrected)
+
+        return "".join(output), punct_positions
