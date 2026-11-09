@@ -1,0 +1,96 @@
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+stages: [verify]
+
+test:
+  stage: verify
+  image: python:3.12-slim
+  variables:
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+    OLLAMA_BASE_URL: "http://127.0.0.1:11434"
+    OLLAMA_FALLBACK_URL: "http://127.0.0.1:11434"
+  cache:
+    key:
+      files: [requirements.txt]
+    paths: [.cache/pip/]
+  script:
+    - mkdir -p reports/resolved
+    - python -m pip install -r requirements.txt
+    - python -m pip freeze > reports/resolved/requirements.txt
+    - python -m pip install pytest==9.0.2
+    - python -m pytest -q --junitxml=reports/pytest.xml
+  artifacts:
+    when: always
+    expire_in: 14 days
+    paths: [reports/resolved/requirements.txt, reports/pytest.xml]
+    reports:
+      junit: reports/pytest.xml
+
+build-image:
+  stage: verify
+  image:
+    name: moby/buildkit:v0.28.0-rootless
+    entrypoint: [""]
+  variables:
+    BUILDKITD_FLAGS: --oci-worker-no-process-sandbox
+  script:
+    - >
+      buildctl-daemonless.sh build --frontend dockerfile.v0
+      --local context=. --local dockerfile=.
+      --output type=image,name=ai-assistant:ci,push=false
+
+secrets:
+  stage: verify
+  image:
+    name: ghcr.io/gitleaks/gitleaks:v8.30.1
+    entrypoint: [""]
+  variables:
+    GIT_DEPTH: "0"
+  script:
+    - mkdir -p reports
+    - git config --global --add safe.directory "$CI_PROJECT_DIR"
+    - git fetch --tags origin '+refs/heads/*:refs/remotes/origin/*'
+    - |
+      status=0
+      gitleaks git --log-opts=--all --redact=100 --report-format=json --report-path=reports/gitleaks-history.json . || status=$?
+      gitleaks dir --redact=100 --report-format=json --report-path=reports/gitleaks-files.json . || status=$?
+      exit "$status"
+  artifacts:
+    when: always
+    expire_in: 14 days
+    paths: [reports/gitleaks-history.json, reports/gitleaks-files.json]
+
+static-analysis:
+  stage: verify
+  image:
+    name: semgrep/semgrep:1.184.0
+    entrypoint: [""]
+  script:
+    - mkdir -p reports
+    - semgrep scan --config p/default --metrics=off --disable-version-check --json-output=reports/semgrep.json .
+  artifacts:
+    when: always
+    expire_in: 14 days
+    paths: [reports/semgrep.json]
+
+dependencies:
+  stage: verify
+  image:
+    name: aquasec/trivy:0.76.2
+    entrypoint: [""]
+  needs:
+    - job: test
+      artifacts: true
+  when: always
+  script:
+    - test -s reports/resolved/requirements.txt
+    - trivy fs --no-progress --scanners vuln --format json --output reports/trivy.json reports/resolved
+    - trivy convert --format table reports/trivy.json
+    - trivy fs --no-progress --format cyclonedx --output reports/sbom.cdx.json reports/resolved
+  artifacts:
+    when: always
+    expire_in: 14 days
+    paths: [reports/trivy.json, reports/sbom.cdx.json]
