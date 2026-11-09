@@ -10,10 +10,20 @@ def test_blank_text_bypasses_detector(monkeypatch):
     assert pp.PreprocessingService().process('  ') == ('  ', False)
 
 
-def test_non_english_rejected(monkeypatch):
-    monkeypatch.setattr(pp, 'detect', lambda **kw: {'lang': 'ru'})
+def test_non_english_rejected_when_detection_is_confident(monkeypatch):
+    monkeypatch.setattr(pp, 'detect', lambda **kw: {'lang': 'ru', 'score': 0.9})
     with pytest.raises(UnsupportedLanguageError):
         pp.PreprocessingService().process('Привет, где заказ?')
+
+
+def test_low_confidence_non_english_detection_is_treated_as_english(monkeypatch):
+    # Опечатки в английском тексте иногда детектятся как низкоуверенный "другой
+    # язык" — такое не должно отклоняться как настоящий иностранный запрос.
+    monkeypatch.setattr(pp, 'detect', lambda **kw: {'lang': 'nds', 'score': 0.27})
+    monkeypatch.setattr(pp, 'correct_text', lambda text, max_dist: (text, []))
+    text, truncated = pp.PreprocessingService().process('wat payment methds do u acept pls')
+    assert truncated is False
+    assert text == 'wat payment methds do u acept pls'
 
 
 def test_length_boundary_and_language_before_truncation(monkeypatch):

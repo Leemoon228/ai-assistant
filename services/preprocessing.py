@@ -16,6 +16,11 @@ logger = logging.getLogger(__name__)
 class PreprocessingService:
     MAX_LENGTH = 300
 
+    # Ниже этого score детектору языка не доверяем: это типично для
+    # англоязычного текста с опечатками/мусором, а не для реального другого
+    # языка — пропускаем как английский, а не отклоняем.
+    LOW_CONFIDENCE_THRESHOLD = 0.5
+
     # Регулярное выражение для поиска знаков препинания.
     _PUNCT_PATTERN = re.compile(r"[.,!?;:'\"()\[\]{}\-—–…]")
 
@@ -66,9 +71,16 @@ class PreprocessingService:
             return text, False
 
         # 1. Проверка языка — до обрезки.
-        lang = self._safe_detect(text)
-        if lang != "en":
-            raise UnsupportedLanguageError(lang)
+        lang, score = self._safe_detect(text)
+        if lang is None:
+            # Детектор недоступен/упал — fail closed, не пропускаем непроверенный текст.
+            raise UnsupportedLanguageError(lang, score)
+        if lang != "en" and score >= self.LOW_CONFIDENCE_THRESHOLD:
+            # Уверенно определён не английский язык.
+            raise UnsupportedLanguageError(lang, score)
+        # lang == "en", либо не-английский определён с низкой уверенностью —
+        # вероятно, это английский текст с опечатками/мусором, а не
+        # осознанный запрос на другом языке. Обрабатываем как английский.
 
         # 2. Обрезка до 200 символов.
         truncated = len(text) > self.MAX_LENGTH
@@ -81,20 +93,13 @@ class PreprocessingService:
         return text, truncated
 
     @staticmethod
-    def _safe_detect(text: str) -> str | None:
+    def _safe_detect(text: str) -> tuple[str | None, float]:
         try:
             result = detect(text=text, low_memory=True)
-            return result["lang"]
+            return result["lang"], float(result.get("score", 0.0))
         except Exception:
             logger.exception("Language detection failed")
-            return None
-
-    def _is_english(self, text: str) -> bool:
-        # Пустая строка / пробелы — считаем валидными.
-        if not text or not text.strip():
-            return True
-
-        return self._safe_detect(text) == "en"
+            return None, 0.0
 
     def _correct_preserving_punctuation(
         self,

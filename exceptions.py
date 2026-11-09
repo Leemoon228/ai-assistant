@@ -12,8 +12,9 @@ class UnsupportedLanguageError(AppError):
     status_code = 422
     code = "unsupported_language"
 
-    def __init__(self, detected_lang: str | None = None):
+    def __init__(self, detected_lang: str | None = None, score: float = 0.0):
         self.detected_lang = detected_lang
+        self.score = score
         message = (
            "Unsupported language. Only English is supported."
         )

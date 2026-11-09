@@ -16,7 +16,7 @@ from services.preprocessing import PreprocessingService
 from services.classification import ClassificationService
 from services.generating import GenerateAnswerService
 
-from exceptions import AppError
+from exceptions import AppError, UnsupportedLanguageError
 from routers import router
 # from http.http_client import close_client
 
@@ -74,14 +74,16 @@ Instrumentator().instrument(app).expose(app)
 async def app_error_handler(request: Request, exc: AppError):
     trace_id = request.headers.get("x-trace-id", "unknown")
     logger.warning("[%s] %s: %s", trace_id, exc.code, exc.message)
+    error_body = {
+        "code": exc.code,
+        "message": exc.message,
+    }
+    if isinstance(exc, UnsupportedLanguageError):
+        error_body["detected_lang"] = exc.detected_lang
+        error_body["score"] = exc.score
     response = JSONResponse(
         status_code=exc.status_code,
-        content={
-            "error": {
-                "code": exc.code,
-                "message": exc.message,
-            }
-        },
+        content={"error": error_body},
     )
     response.headers["X-Trace-Id"] = trace_id
     return response
