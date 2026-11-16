@@ -1,0 +1,165 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['image-v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      OLLAMA_BASE_URL: http://127.0.0.1:11434
+      OLLAMA_FALLBACK_URL: http://127.0.0.1:11434
+      TRIVY_IMAGE: aquasec/trivy:0.76.2
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install application dependencies
+        id: dependencies
+        run: |
+          mkdir -p reports/resolved
+          python -m pip install -r requirements.txt
+          python -m pip freeze > reports/resolved/requirements.txt
+          python -m pip install pytest==9.0.2
+      - name: Run regression tests
+        run: python -m pytest -q --junitxml=reports/pytest.xml
+      - name: Build Docker image
+        run: docker build --platform linux/amd64 --tag app:ci .
+      - name: Scan resolved dependencies and generate SBOM
+        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/trivy-cache"
+          scan() {
+            docker run --rm \
+              -v "$GITHUB_WORKSPACE/reports:/reports" \
+              -v "$RUNNER_TEMP/trivy-cache:/root/.cache/trivy" \
+              "$TRIVY_IMAGE" "$@"
+          }
+          scan fs --no-progress --scanners vuln --format json --output /reports/trivy.json /reports/resolved
+          scan convert --format table /reports/trivy.json
+          scan fs --no-progress --format cyclonedx --output /reports/sbom.cdx.json /reports/resolved
+      - name: Upload test and dependency reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: ml-test-and-dependency-results
+          path: reports/
+          retention-days: 14
+
+  security:
+    name: Security scans
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GITLEAKS_IMAGE: ghcr.io/gitleaks/gitleaks:v8.30.1
+      SEMGREP_IMAGE: semgrep/semgrep:1.184.0
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Create report directory
+        run: mkdir -p "$RUNNER_TEMP/ci-reports"
+      - name: Check Git history and files for secrets
+        run: |
+          scan() {
+            docker run --rm \
+              -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/repo \
+              -v "$GITHUB_WORKSPACE:/repo:ro" -v "$RUNNER_TEMP/ci-reports:/reports" \
+              "$GITLEAKS_IMAGE" "$@"
+          }
+          status=0
+          scan git --log-opts=--all --redact=100 --report-format=json --report-path=/reports/gitleaks-history.json /repo || status=$?
+          scan dir --redact=100 --report-format=json --report-path=/reports/gitleaks-files.json /repo || status=$?
+          exit "$status"
+      - name: Analyze source code
+        if: ${{ !cancelled() }}
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/src:ro" -v "$RUNNER_TEMP/ci-reports:/reports" \
+            "$SEMGREP_IMAGE" semgrep scan --config p/default --metrics=off --disable-version-check \
+            --json-output=/reports/semgrep.json /src
+      - name: Upload security reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: security-reports
+          path: ${{ runner.temp }}/ci-reports/
+          retention-days: 14
+
+  publish-image:
+    name: Publish ML Docker image
+    needs: [verify, security]
+    if: ${{ github.repository == 'Leemoon228/ai-assistant' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/image-v') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+    concurrency:
+      group: image-release-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Package verified revision
+        shell: bash
+        run: |
+          output="$RUNNER_TEMP/image-release"
+          mkdir -p "$output"
+          revision="${GITHUB_SHA:0:12}"
+          image="ai-assistant-ml:sha-$revision"
+          docker build --platform linux/amd64 \
+            --label "org.opencontainers.image.revision=$GITHUB_SHA" --tag "$image" .
+          docker image save "$image" | gzip -1 > "$output/ml-linux-amd64.tar.gz"
+
+          cat > "$output/compose.image.yml" <<EOF
+          services:
+            ai-assistant:
+              build: !reset null
+              image: $image
+              pull_policy: never
+          EOF
+          (cd "$output" && sha256sum -- *.tar.gz > SHA256SUMS)
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          output="$RUNNER_TEMP/image-release"
+          assets=("$output"/*)
+          notes="$RUNNER_TEMP/image-release.md"
+          cat > "$notes" <<EOF
+          Linux amd64 Docker image from $GITHUB_SHA.
+          Load the archive and add compose.image.yml as the final Compose file:
+
+              docker image load -i ml-linux-amd64.tar.gz
+              docker compose -f docker-compose.yml -f compose.image.yml up -d --no-build --no-deps ai-assistant
+
+          Ollama must be reachable at OLLAMA_BASE_URL configured on the stand.
+          EOF
+          if draft=$(gh release view "$GITHUB_REF_NAME" --json isDraft --jq '.isDraft' 2>/dev/null); then
+            if [ "$draft" = true ]; then
+              gh release upload "$GITHUB_REF_NAME" "${assets[@]}" --clobber
+              gh release edit "$GITHUB_REF_NAME" --draft=false
+            else
+              echo "Release $GITHUB_REF_NAME already published."
+            fi
+          else
+            gh release create "$GITHUB_REF_NAME" "${assets[@]}" --verify-tag \
+              --title "ML image $GITHUB_REF_NAME" --notes-file "$notes"
+          fi
